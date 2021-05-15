@@ -1,6 +1,6 @@
 {
   "name": "qiankun",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "An completed implementation of Micro Frontends",
   "keywords": [
     "micro frontend",
@@ -65,7 +65,7 @@
     "@babel/runtime": "^7.10.5",
     "import-html-entry": "^1.9.0",
     "lodash": "^4.17.11",
-    "single-spa": "5.8.1",
+    "single-spa": "^5.9.2",
     "tslib": "^1.10.0"
   },
   "devDependencies": {
@@ -80,7 +80,7 @@
     "husky": "^2.3.0",
     "jest": "^25.2.2",
     "levenary": "^1.1.1",
-    "lint-staged": "^9.4.2",
+    "lint-staged": "^10.5.4",
     "np": "^5.0.3",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.1.2",

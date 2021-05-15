@@ -14,13 +14,7 @@ export function setCurrentRunningSandboxProxy(proxy: WindowProxy | null) {
   currentRunningSandboxProxy = proxy;
 }
 
-const functionBoundedValueMap = new WeakMap<CallableFunction, CallableFunction>();
 export function getTargetValue(target: any, value: any): any {
-  const cachedBoundFunction = functionBoundedValueMap.get(value);
-  if (cachedBoundFunction) {
-    return cachedBoundFunction;
-  }
-
   /*
     仅绑定 isCallable && !isBoundedFunction && !isConstructable 的函数对象，如 window.console、window.atob 这类。目前没有完美的检测方式，这里通过 prototype 中是否还有可枚举的拓展方法的方式来判断
     @warning 这里不要随意替换成别的判断方式，因为可能触发一些 edge case（比如在 lodash.isFunction 在 iframe 上下文中可能由于调用了 top window 对象触发的安全异常）
@@ -35,12 +29,16 @@ export function getTargetValue(target: any, value: any): any {
       boundValue[key] = value[key];
     }
 
-    // copy prototype if bound function not have
-    // mostly a bound function have no own prototype, but it not absolute in some old version browser, see https://github.com/umijs/qiankun/issues/1121
-    if (value.hasOwnProperty('prototype') && !boundValue.hasOwnProperty('prototype'))
-      boundValue.prototype = value.prototype;
+    // copy prototype if bound function not have but target one have
+    // as prototype is non-enumerable mostly, we need to copy it from target function manually
+    if (value.hasOwnProperty('prototype') && !boundValue.hasOwnProperty('prototype')) {
+      // we should not use assignment operator to set boundValue prototype like `boundValue.prototype = value.prototype`
+      // as the assignment will also look up prototype chain while it hasn't own prototype property,
+      // when the lookup succeed, the assignment will throw an TypeError like `Cannot assign to read only property 'prototype' of function` if its descriptor configured with writable false or just have a getter accessor
+      // see https://github.com/umijs/qiankun/issues/1121
+      Object.defineProperty(boundValue, 'prototype', { value: value.prototype, enumerable: false, writable: true });
+    }
 
-    functionBoundedValueMap.set(value, boundValue);
     return boundValue;
   }
 
