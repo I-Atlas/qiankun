@@ -320,17 +320,18 @@ export async function loadApp<T extends ObjectType>(
     unmountSandbox = sandboxContainer.unmount;
   }
 
-  const { beforeUnmount = [], afterUnmount = [], afterMount = [], beforeMount = [], beforeLoad = [] } = mergeWith(
-    {},
-    getAddOns(global, assetPublicPath),
-    lifeCycles,
-    (v1, v2) => concat(v1 ?? [], v2 ?? []),
-  );
+  const {
+    beforeUnmount = [],
+    afterUnmount = [],
+    afterMount = [],
+    beforeMount = [],
+    beforeLoad = [],
+  } = mergeWith({}, getAddOns(global, assetPublicPath), lifeCycles, (v1, v2) => concat(v1 ?? [], v2 ?? []));
 
   await execHooksChain(toArray(beforeLoad), app, global);
 
   // get the lifecycle hooks from module exports
-  const scriptExports: any = await execScripts(global, !useLooseSandbox);
+  const scriptExports: any = await execScripts(global, sandbox && !useLooseSandbox);
   const { bootstrap, mount, unmount, update } = getLifecyclesFromExports(
     scriptExports,
     appName,
@@ -338,11 +339,8 @@ export async function loadApp<T extends ObjectType>(
     sandboxContainer?.instance?.latestSetProp,
   );
 
-  const {
-    onGlobalStateChange,
-    setGlobalState,
-    offGlobalStateChange,
-  }: Record<string, CallableFunction> = getMicroAppStateActions(appInstanceId);
+  const { onGlobalStateChange, setGlobalState, offGlobalStateChange }: Record<string, CallableFunction> =
+    getMicroAppStateActions(appInstanceId);
 
   // FIXME temporary way
   const syncAppWrapperElement2Sandbox = (element: HTMLElement | null) => (initialAppWrapperElement = element);

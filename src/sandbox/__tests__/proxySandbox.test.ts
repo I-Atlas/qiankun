@@ -332,3 +332,31 @@ test('falsy values should return as expected', () => {
   expect(proxy.nullvar).toBeNull();
   expect(proxy.zero).toBe(0);
 });
+
+it('should return true while [[GetPrototypeOf]] invoked by proxy object', () => {
+  // window.__proto__ not equals window prototype in jest environment
+  // eslint-disable-next-line no-proto
+  expect(window.__proto__ === Object.getPrototypeOf(window)).toBeFalsy();
+  // we must to set the prototype of window as jest modified window `__proto__` property but not changed it internal [[Prototype]] property
+  // eslint-disable-next-line no-proto
+  Object.setPrototypeOf(window, window.__proto__);
+
+  const { proxy } = new ProxySandbox('window-prototype');
+  expect(proxy instanceof Window).toBeTruthy();
+  expect(Object.getPrototypeOf(proxy)).toBe(Object.getPrototypeOf(window));
+  expect(Reflect.getPrototypeOf(proxy)).toBe(Reflect.getPrototypeOf(window));
+  expect(Reflect.getPrototypeOf(proxy)).toBe(Object.getPrototypeOf(window));
+});
+
+it('native window function calling should always be bound with window', () => {
+  const { proxy } = new ProxySandbox('mustBeBoundWithWindowReference');
+  proxy.nativeWindowFunction = function nativeWindowFunction(this: any) {
+    if (this !== undefined && this !== window) {
+      throw new Error('Illegal Invocation!');
+    }
+
+    return 'success';
+  };
+
+  expect(proxy.nativeWindowFunction()).toBe('success');
+});
